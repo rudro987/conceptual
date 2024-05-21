@@ -1,5 +1,7 @@
 import { Schema, model } from 'mongoose'
-import { TMovie, TReview } from './movie.interface'
+import { TMovie, TMovieMethods, TMovieModel, TReview } from './movie.interface'
+import { format } from 'date-fns'
+import slugify from 'slugify'
 
 const reviewSchema = new Schema<TReview>({
   email: {
@@ -16,7 +18,7 @@ const reviewSchema = new Schema<TReview>({
   },
 })
 
-const movieSchema = new Schema<TMovie>({
+const movieSchema = new Schema<TMovie, TMovieModel, TMovieMethods>({
   title: {
     type: String,
     required: [true, 'Title is required'],
@@ -46,6 +48,18 @@ const movieSchema = new Schema<TMovie>({
     type: Boolean,
     default: 0,
   },
-});
+})
 
-export const Movie = model<TMovie>('Movie', movieSchema);
+// movieSchema.pre('save', async function (next) {
+//   const date = format(this.releaseDate, 'dd-MM-yyyy')
+//   this.slug = slugify(`$${this.title}-${date}`, { lower: true })
+//   next
+// })
+
+movieSchema.method('createSlug', function createSlug(payload: TMovie) {
+  const date = format(payload.releaseDate, 'dd-MM-yyyy')
+  const slug = slugify(`$${payload.title}-${date}`, { lower: true })
+  return slug
+})
+
+export const Movie = model<TMovie, TMovieModel>('Movie', movieSchema)
